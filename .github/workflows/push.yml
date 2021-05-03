@@ -1,0 +1,46 @@
+name: Build
+
+on:
+  push:
+    branches:
+    - japanese
+
+env:
+  LANG: ja_JP.UTF-8
+  LANGUAGE: ja_JP.UTF-8
+  LC_ALL: ja_JP.UTF-8
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: cache
+        id: cache-dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            /home/runner/go/
+            /home/runner/.cache/
+            /home/runner/.local/
+          key: cache-dependencies
+          restore-keys: cache-dependencies
+      - name: setup go
+        uses: actions/setup-go@v2
+      - name: setup python
+        uses: actions/setup-python@v2
+      - name: setup dependencies
+        run: |
+          set -eux
+          sudo apt install language-pack-ja-base language-pack-ja
+          sudo update-locale LANG=${LANG} LANGUAGE=${LANGUAGE} LC_ALL=${LC_ALL}
+          go get -v github.com/mmarkdown/mmark
+          pip install --user xml2rfc
+      - name: convert
+        run: ./make.sh
+      - name: upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: artifacts
+          path: artifacts
